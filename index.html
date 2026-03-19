@@ -3,47 +3,390 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competitor Intelligence</title>
+    <title>SEO Radar | WPS Competitor Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'] },
+                    colors: {
+                        appleDark: '#1D1D1F',
+                        appleGray: '#86868B',
+                        appleBlue: '#0066CC',
+                        appleGreen: '#008A00',
+                        appleRed: '#FF3B30',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: Inter, sans-serif; background: #FAFAFA; -webkit-font-smoothing: antialiased; }
-        .card { background: #fff; border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); transition: all 0.3s; }
-        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+        /* 1. 全局切回纯白色背景 */
+        body { 
+            background-color: #FFFFFF;
+            -webkit-font-smoothing: antialiased; 
+            letter-spacing: -0.01em; 
+            overflow-x: hidden;
+        }
+        
+        /* 导航栏毛玻璃 (在纯白背景下，稍微降低透明度以保持可见度) */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        /* 2. 针对白色背景优化的毛玻璃卡片 (Glassmorphism on White) */
+        .glass-card {
+            /* 在纯白背景上，稍微提高卡片的不透明度，并加强阴影 */
+            background: rgba(245, 245, 247, 0.7); /* 使用极浅的灰色基底，透出白色背景 */
+            backdrop-filter: blur(30px) saturate(120%);
+            -webkit-backdrop-filter: blur(30px) saturate(120%);
+            /* 精致的白色高光描边，体现玻璃边缘 */
+            border: 1px solid rgba(255, 255, 255, 1); 
+            border-radius: 24px;
+            /* 使用更柔和但范围更广的阴影，营造悬浮感 */
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+        
+        /* 卡片悬浮动效 */
+        .glass-card:hover {
+            transform: translateY(-4px) scale(1.002);
+            background: rgba(245, 245, 247, 0.85); /* Hover时稍微加深 */
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+        }
+
+        /* 渐变标题 */
+        .text-gradient {
+            background: linear-gradient(135deg, #1D1D1F 0%, #434353 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 触觉反馈 (按压时的物理回弹) */
+        .tactile { transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tactile:active { transform: scale(0.96); }
+
+        /* 表格行适配 */
+        .list-row { transition: background-color 0.2s ease; border-bottom: 1px solid rgba(0,0,0,0.03); }
+        .list-row:last-child { border-bottom: none; }
+        .list-row:hover { background: rgba(255, 255, 255, 0.7); }
+
+        /* 下拉菜单动画 */
+        .dropdown-menu {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.96);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: top right;
+        }
+        .dropdown-open .dropdown-menu {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        .dropdown-icon { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .dropdown-open .dropdown-icon { transform: rotate(180deg); }
+
+        /* 核心动效：滚动视差加载 */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .stagger-row {
+            opacity: 0;
+            transform: translateX(-15px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .stagger-row.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .delay-100 { transition-delay: 100ms; }
+        .delay-200 { transition-delay: 200ms; }
+        .delay-300 { transition-delay: 300ms; }
     </style>
 </head>
-<body class="min-h-screen">
-    <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
-            <h1 class="text-xl font-bold tracking-tight">Competitor Intelligence</h1>
-            <span class="text-sm text-gray-400">Powered by Ahrefs API</span>
+<body class="text-appleDark selection:bg-appleBlue selection:text-white pb-32">
+
+    <nav class="fixed top-0 w-full z-50 glass-nav" id="navbar">
+        <div class="max-w-[1400px] mx-auto px-8 h-14 flex items-center justify-between">
+            <div class="font-semibold text-lg tracking-tight flex items-center">
+                <span class="font-black mr-2">WPS</span>
+                <span class="text-appleGray font-medium">SEO Radar</span>
+            </div>
+            
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center text-sm font-medium text-appleDark">
+                    <span class="w-1.5 h-1.5 rounded-full bg-appleBlue mr-2 animate-pulse"></span>
+                    Target: notion.so
+                </div>
+
+                <div class="relative" id="timeDropdown">
+                    <button onclick="toggleDropdown()" class="tactile text-sm font-medium text-appleDark flex items-center py-1.5 px-3 rounded-md hover:bg-black/5 focus:outline-none">
+                        Mar 19, 2026
+                        <svg class="w-3.5 h-3.5 ml-1.5 text-appleGray dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="dropdown-menu absolute right-0 mt-2 w-44 bg-white border border-black/5 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.1)] py-1 z-50">
+                        <div class="px-3 py-1.5 text-[10px] font-bold text-appleGray uppercase tracking-widest">Past 7 Days</div>
+                        <a href="#" class="block px-4 py-2 text-sm text-appleBlue font-semibold bg-blue-50 flex justify-between items-center">
+                            Mar 19, 2026
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </a>
+                        <a href="#" class="block px-4 py-2 text-sm text-appleDark hover:bg-black/5 transition-colors">Mar 18, 2026</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-appleDark hover:bg-black/5 transition-colors">Mar 17, 2026</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-appleDark hover:bg-black/5 transition-colors">Mar 16, 2026</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-appleDark hover:bg-black/5 transition-colors">Mar 15, 2026</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-appleDark hover:bg-black/5 transition-colors">Mar 14, 2026</a>
+                        <a href="#" class="block px-4 py-2 text-sm text-appleDark hover:bg-black/5 transition-colors">Mar 13, 2026</a>
+                    </div>
+                </div>
+            </div>
         </div>
+    </nav>
+
+    <header class="pt-32 pb-16 px-8 max-w-[1400px] mx-auto reveal">
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tight mb-3 text-gradient">Competitor Intelligence.</h1>
+        <p class="text-xl text-appleGray font-medium tracking-tight">Analytics and ranking movements for notion.so</p>
     </header>
-    <main class="max-w-7xl mx-auto px-6 py-16">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-extrabold tracking-tight mb-4">竞品数据平台</h2>
-            <p class="text-gray-500 text-lg">即将上线 · Coming Soon</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="card p-8 text-center">
-                <div class="text-4xl mb-4">📊</div>
-                <h3 class="font-bold text-lg mb-2">关键词数据</h3>
-                <p class="text-gray-400 text-sm">Organic keywords, search volume, difficulty</p>
+
+    <main class="max-w-[1400px] mx-auto px-8 space-y-16">
+
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="glass-card p-6 flex flex-col justify-between h-40 reveal delay-100">
+                <span class="text-xs font-semibold text-appleGray uppercase tracking-widest">Organic Traffic</span>
+                <div>
+                    <div class="text-3xl font-bold mb-1 tracking-tight">12.4M</div>
+                    <div class="text-xs font-semibold text-appleGreen flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg> 2.4%
+                    </div>
+                </div>
             </div>
-            <div class="card p-8 text-center">
-                <div class="text-4xl mb-4">🔗</div>
-                <h3 class="font-bold text-lg mb-2">反向链接</h3>
-                <p class="text-gray-400 text-sm">Backlinks, referring domains, authority</p>
+            
+            <div class="glass-card p-6 flex flex-col justify-between h-40 reveal delay-200">
+                <span class="text-xs font-semibold text-appleGray uppercase tracking-widest">Domain Rating</span>
+                <div>
+                    <div class="text-3xl font-bold mb-1 tracking-tight">92</div>
+                    <div class="text-xs font-semibold text-appleGray flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 12h14"></path></svg> No change
+                    </div>
+                </div>
             </div>
-            <div class="card p-8 text-center">
-                <div class="text-4xl mb-4">📈</div>
-                <h3 class="font-bold text-lg mb-2">流量分析</h3>
-                <p class="text-gray-400 text-sm">Traffic trends, top pages, competitors</p>
+            
+            <div class="glass-card p-6 flex flex-col justify-between h-40 reveal delay-300">
+                <span class="text-xs font-semibold text-appleGray uppercase tracking-widest">Keywords (Top 100)</span>
+                <div>
+                    <div class="text-3xl font-bold mb-1 tracking-tight">1.2M</div>
+                    <div class="text-xs font-semibold text-appleGreen flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg> 842 New
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="mt-20 text-center text-gray-400 text-sm">
-            <p>Send topics to configure · 配置要追踪的竞品</p>
-        </div>
+            
+            <div class="glass-card p-6 flex flex-col justify-between h-40 reveal delay-300">
+                <span class="text-xs font-semibold text-appleGray uppercase tracking-widest">Referring Domains</span>
+                <div>
+                    <div class="text-3xl font-bold mb-1 tracking-tight">284K</div>
+                    <div class="text-xs font-semibold text-appleGreen flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg> 12 High-DR
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="reveal">
+            <div class="mb-5 px-2 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-1 h-5 bg-appleBlue rounded-full mr-3"></div>
+                    <h2 class="text-2xl font-bold tracking-tight">Newly Discovered</h2>
+                    <span class="ml-3 px-2 py-0.5 bg-blue-50 border border-blue-100 rounded-full text-xs font-semibold text-appleBlue shadow-inner">Past 7 Days</span>
+                </div>
+            </div>
+
+            <div class="glass-card overflow-hidden cursor-default hover:transform-none hover:box-shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:bg-[rgba(245,245,247,0.7)]">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse whitespace-nowrap stagger-container">
+                        <thead class="bg-black/5 border-b border-black/5">
+                            <tr class="text-[11px] font-semibold text-appleGray uppercase tracking-widest">
+                                <th class="px-8 py-4 w-1/4">Keyword</th>
+                                <th class="px-6 py-4">Intent</th>
+                                <th class="px-6 py-4">Vol</th>
+                                <th class="px-6 py-4">KD</th>
+                                <th class="px-6 py-4">Position</th>
+                                <th class="px-6 py-4">Est. Traffic</th>
+                                <th class="px-8 py-4 text-right">Target URL</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="list-row group stagger-row">
+                                <td class="px-8 py-4 font-semibold text-appleDark">notion ai calendar integration</td>
+                                <td class="px-6 py-4"><span class="text-[11px] font-semibold text-appleGray tracking-wider uppercase">Commercial</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">8,500</td>
+                                <td class="px-6 py-4"><div class="flex items-center text-appleGray"><span class="w-1.5 h-1.5 rounded-full bg-appleGreen mr-2"></span>18</div></td>
+                                <td class="px-6 py-4"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-appleBlue">New (8)</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">450</td>
+                                <td class="px-8 py-4 text-right"><a href="#" class="text-appleGray hover:text-appleBlue transition-colors text-xs font-medium truncate max-w-[150px] inline-block">/product/calendar</a></td>
+                            </tr>
+                            <tr class="list-row group stagger-row">
+                                <td class="px-8 py-4 font-semibold text-appleDark">wps ai vs notion ai comparison</td>
+                                <td class="px-6 py-4"><span class="text-[11px] font-semibold text-appleGray tracking-wider uppercase">Commercial</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">12,000</td>
+                                <td class="px-6 py-4"><div class="flex items-center text-appleGray"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-2"></span>45</div></td>
+                                <td class="px-6 py-4"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-appleBlue">New (3)</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">1,200</td>
+                                <td class="px-8 py-4 text-right"><a href="#" class="text-appleGray hover:text-appleBlue transition-colors text-xs font-medium truncate max-w-[150px] inline-block">/compare/wps-ai</a></td>
+                            </tr>
+                            <tr class="list-row group stagger-row">
+                                <td class="px-8 py-4 font-semibold text-appleDark">automate meeting notes notion</td>
+                                <td class="px-6 py-4"><span class="text-[11px] font-semibold text-appleGray tracking-wider uppercase">Informational</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">4,200</td>
+                                <td class="px-6 py-4"><div class="flex items-center text-appleGray"><span class="w-1.5 h-1.5 rounded-full bg-appleGreen mr-2"></span>22</div></td>
+                                <td class="px-6 py-4"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-blue-50 text-appleBlue">New (15)</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">85</td>
+                                <td class="px-8 py-4 text-right"><a href="#" class="text-appleGray hover:text-appleBlue transition-colors text-xs font-medium truncate max-w-[150px] inline-block">/blog/meeting-notes</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section class="reveal">
+            <div class="mb-5 px-2 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-1 h-5 bg-appleGreen rounded-full mr-3"></div>
+                    <h2 class="text-2xl font-bold tracking-tight">Surging Rankings</h2>
+                    <span class="ml-3 px-2 py-0.5 bg-green-50 border border-green-100 rounded-full text-xs font-semibold text-appleGreen shadow-inner">Up 20+ Spots</span>
+                </div>
+            </div>
+
+            <div class="glass-card overflow-hidden cursor-default hover:transform-none hover:box-shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:bg-[rgba(245,245,247,0.7)]">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse whitespace-nowrap stagger-container">
+                        <thead class="bg-black/5 border-b border-black/5">
+                            <tr class="text-[11px] font-semibold text-appleGray uppercase tracking-widest">
+                                <th class="px-8 py-4 w-1/4">Keyword</th>
+                                <th class="px-6 py-4">Intent</th>
+                                <th class="px-6 py-4">Vol</th>
+                                <th class="px-6 py-4">KD</th>
+                                <th class="px-6 py-4">Position</th>
+                                <th class="px-6 py-4">Est. Traffic</th>
+                                <th class="px-8 py-4 text-right">Target URL</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="list-row group stagger-row">
+                                <td class="px-8 py-4 font-semibold text-appleDark">enterprise knowledge base software</td>
+                                <td class="px-6 py-4"><span class="text-[11px] font-semibold text-appleGray tracking-wider uppercase">Commercial</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">35,000</td>
+                                <td class="px-6 py-4"><div class="flex items-center text-appleGray"><span class="w-1.5 h-1.5 rounded-full bg-appleRed mr-2"></span>78</div></td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center font-bold text-appleDark">
+                                        4
+                                        <div class="ml-3 flex items-center text-appleGreen text-xs font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-100 shadow-sm">
+                                            <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg> 24
+                                        </div>
+                                    </div>
+                                    <div class="text-[10px] text-appleGray font-medium mt-0.5">from 28</div>
+                                </td>
+                                <td class="px-6 py-4 font-medium text-appleDark">6,200</td>
+                                <td class="px-8 py-4 text-right"><a href="#" class="text-appleGray hover:text-appleBlue transition-colors text-xs font-medium truncate max-w-[150px] inline-block">/enterprise</a></td>
+                            </tr>
+                            <tr class="list-row group stagger-row">
+                                <td class="px-8 py-4 font-semibold text-appleDark">free jira alternatives</td>
+                                <td class="px-6 py-4"><span class="text-[11px] font-semibold text-appleGray tracking-wider uppercase">Commercial</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">65,000</td>
+                                <td class="px-6 py-4"><div class="flex items-center text-appleGray"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-2"></span>65</div></td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center font-bold text-appleDark">
+                                        8
+                                        <div class="ml-3 flex items-center text-appleGreen text-xs font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-100 shadow-sm">
+                                            <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg> 31
+                                        </div>
+                                    </div>
+                                    <div class="text-[10px] text-appleGray font-medium mt-0.5">from 39</div>
+                                </td>
+                                <td class="px-6 py-4 font-medium text-appleDark">1,800</td>
+                                <td class="px-8 py-4 text-right"><a href="#" class="text-appleGray hover:text-appleBlue transition-colors text-xs font-medium truncate max-w-[150px] inline-block">/compare/jira</a></td>
+                            </tr>
+                            <tr class="list-row group stagger-row">
+                                <td class="px-8 py-4 font-semibold text-appleDark">how to write a prd</td>
+                                <td class="px-6 py-4"><span class="text-[11px] font-semibold text-appleGray tracking-wider uppercase">Informational</span></td>
+                                <td class="px-6 py-4 font-medium text-appleDark">22,000</td>
+                                <td class="px-6 py-4"><div class="flex items-center text-appleGray"><span class="w-1.5 h-1.5 rounded-full bg-yellow-500 mr-2"></span>42</div></td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center font-bold text-appleDark">
+                                        2
+                                        <div class="ml-3 flex items-center text-appleGreen text-xs font-semibold bg-green-50 px-1.5 py-0.5 rounded border border-green-100 shadow-sm">
+                                            <svg class="w-3 h-3 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg> 21
+                                        </div>
+                                    </div>
+                                    <div class="text-[10px] text-appleGray font-medium mt-0.5">from 23</div>
+                                </td>
+                                <td class="px-6 py-4 font-medium text-appleDark">4,100</td>
+                                <td class="px-8 py-4 text-right"><a href="#" class="text-appleGray hover:text-appleBlue transition-colors text-xs font-medium truncate max-w-[150px] inline-block">/blog/prd-guide</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
     </main>
+
+    <script>
+        function toggleDropdown() {
+            document.getElementById('timeDropdown').classList.toggle('dropdown-open');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('#timeDropdown')) {
+                var dropdowns = document.getElementsByClassName("dropdown-open");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    dropdowns[i].classList.remove('dropdown-open');
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const reveals = document.querySelectorAll('.reveal');
+            setTimeout(() => {
+                reveals.forEach(el => el.classList.add('active'));
+            }, 50);
+
+            const staggerRows = document.querySelectorAll('.stagger-row');
+            staggerRows.forEach((row, index) => {
+                setTimeout(() => {
+                    row.classList.add('active');
+                }, 300 + (index * 50)); 
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 10) {
+                nav.style.background = 'rgba(255, 255, 255, 0.95)';
+                nav.style.boxShadow = '0 8px 30px rgba(0,0,0,0.03)';
+            } else {
+                nav.style.background = 'rgba(255, 255, 255, 0.8)';
+                nav.style.boxShadow = 'none';
+            }
+        });
+    </script>
 </body>
 </html>
