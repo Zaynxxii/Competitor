@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competitor Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: Inter, sans-serif; background: #FAFAFA; -webkit-font-smoothing: antialiased; }
+        .card { background: #fff; border-radius: 20px; box-shadow: 0 2px 16px rgba(0,0,0,0.06); transition: all 0.3s; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex justify-between items-center">
+            <h1 class="text-xl font-bold tracking-tight">Competitor Intelligence</h1>
+            <span class="text-sm text-gray-400">Powered by Ahrefs API</span>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-6 py-16">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-extrabold tracking-tight mb-4">竞品数据平台</h2>
+            <p class="text-gray-500 text-lg">即将上线 · Coming Soon</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="card p-8 text-center">
+                <div class="text-4xl mb-4">📊</div>
+                <h3 class="font-bold text-lg mb-2">关键词数据</h3>
+                <p class="text-gray-400 text-sm">Organic keywords, search volume, difficulty</p>
+            </div>
+            <div class="card p-8 text-center">
+                <div class="text-4xl mb-4">🔗</div>
+                <h3 class="font-bold text-lg mb-2">反向链接</h3>
+                <p class="text-gray-400 text-sm">Backlinks, referring domains, authority</p>
+            </div>
+            <div class="card p-8 text-center">
+                <div class="text-4xl mb-4">📈</div>
+                <h3 class="font-bold text-lg mb-2">流量分析</h3>
+                <p class="text-gray-400 text-sm">Traffic trends, top pages, competitors</p>
+            </div>
+        </div>
+        <div class="mt-20 text-center text-gray-400 text-sm">
+            <p>Send topics to configure · 配置要追踪的竞品</p>
+        </div>
+    </main>
+</body>
+</html>
